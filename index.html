@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Will You Be My Girlfriend?</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fce7f3; /* Light pink background */
+        }
+        .chat-bubble {
+            max-width: 80%;
+            padding: 1rem;
+            border-radius: 1.5rem; /* More rounded corners */
+            margin-bottom: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        .chat-bubble.sent {
+            background-color: #dbeafe; /* Light blue for sent messages */
+            align-self: flex-end;
+            margin-left: auto;
+        }
+        .chat-bubble.received {
+            background-color: #fbcfe8; /* Light pink for received messages (buttons) */
+            align-self: flex-start;
+            margin-right: auto;
+        }
+        .button-container {
+            display: flex;
+            gap: 1rem; /* Space between buttons */
+            margin-top: 1.5rem;
+            justify-content: center;
+            width: 100%;
+        }
+        .action-button {
+            transition: all 0.3s ease-in-out; /* Smooth transition for size changes */
+            font-weight: 700; /* Bold font */
+            border-radius: 9999px; /* Fully rounded pills */
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2); /* Stronger shadow */
+            padding: 1rem 2.5rem; /* Larger padding */
+            font-size: 1.25rem; /* Larger font size */
+            cursor: pointer;
+            border: none;
+            outline: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .yes-button {
+            background-color: #ec4899; /* Pink */
+            color: white;
+        }
+        .yes-button:hover {
+            background-color: #db2777; /* Darker pink on hover */
+            transform: translateY(-2px); /* Slight lift effect */
+        }
+        .no-button {
+            background-color: #fca5a5; /* Light red */
+            color: white;
+        }
+        .no-button:hover {
+            background-color: #f87171; /* Darker red on hover */
+            transform: translateY(-2px); /* Slight lift effect */
+        }
+
+        /* Celebration animation */
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: var(--color);
+            border-radius: 50%;
+            animation: confetti-fall 3s ease-out forwards;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 w-full max-w-md flex flex-col items-center relative overflow-hidden">
+        <!-- Chat Container -->
+        <div id="chatContainer" class="w-full flex flex-col items-start mb-6 overflow-y-auto max-h-[60vh] pr-2">
+            <!-- Initial message will be added here by JS -->
+        </div>
+
+        <!-- Buttons Container -->
+        <div id="buttonContainer" class="button-container">
+            <button id="yesButton" class="action-button yes-button w-1/2">Yes!</button>
+            <button id="noButton" class="action-button no-button w-1/2">No</button>
+        </div>
+
+        <!-- Celebration Overlay -->
+        <div id="celebrationOverlay" class="fixed inset-0 bg-gradient-to-br from-pink-400 to-purple-600 flex items-center justify-center text-center text-white text-5xl font-extrabold z-50 hidden opacity-0 transition-opacity duration-500">
+            <div class="relative">
+                <p class="text-shadow-lg leading-tight">YES! You just made me the happiest person in the world! 🎉🥳💖</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get references to DOM elements
+        const chatContainer = document.getElementById('chatContainer');
+        const yesButton = document.getElementById('yesButton');
+        const noButton = document.getElementById('noButton');
+        const buttonContainer = document.getElementById('buttonContainer');
+        const celebrationOverlay = document.getElementById('celebrationOverlay');
+
+        // State variables
+        let noPressCount = 0; // Starts at 0, increments after each full exchange
+        const maxNoPresses = 10;
+
+        // Messages for each 'No' press (from the proposer - 'sent')
+        const sentNoMessages = [
+            "Oh, really? Are you absolutely sure? 🤔",
+            "Come on, don't be shy! Give it another thought. 😉",
+            "My heart just skipped a beat... but not in a good way! 💔",
+            "Is this a trick question? Because my answer is always 'yes' to you! 🥰",
+            "I'm pretty sure you meant 'yes' and just accidentally hit 'no'! 😂",
+            "My feelings are getting stronger with every 'no' you press! ❤️‍🔥",
+            "You're making this hard, but I'm not giving up on us! 💪",
+            "Just say 'yes' already! My finger is getting tired of waiting! 🥺",
+            "This is your last chance to say 'no' before 'yes' becomes inevitable! 😈",
+            "Okay, 'no' is no longer an option. It's destiny! ✨"
+        ];
+
+        // Messages from her (received - 'received')
+        const receivedNoMessages = [
+            "Hmm, let me think...",
+            "Are you sure you're ready for this? 😉",
+            "But... what if I say no for real? 😜",
+            "You're so persistent! Is this a test? 🤔",
+            "My heart is racing too, you know! ❤️",
+            "This is getting serious! Are you sure you can handle me? 😉",
+            "You're really making me smile, you know that? 😊",
+            "Okay, okay, I hear you! But I love teasing you! 🥰",
+            "You're adorable when you're desperate! 😂",
+            "Fine, fine! You win! But only because you're cute! 😉"
+        ];
+
+
+        // Final 'Yes' messages after max 'No' presses
+        const finalYesMessage = "Yay, you are mine now! 🥰"; // Updated final message
+
+        /**
+         * Adds a new chat bubble to the container.
+         * @param {string} text - The text content of the message.
+         * @param {string} type - 'sent' or 'received' for styling.
+         */
+        function addChatMessage(text, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('chat-bubble', type);
+            messageDiv.textContent = text;
+            chatContainer.appendChild(messageDiv);
+            // Scroll to the bottom to show the latest message
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        /**
+         * Updates the UI based on the current noPressCount.
+         * noPressCount is 0-indexed for array access, but 1-indexed for visual progression.
+         */
+        function updateUI() {
+            // Adjust button sizes based on the *next* state (after the current 'no' press)
+            // Use noPressCount directly as it represents the number of 'no' presses completed.
+            const yesSize = 50 + (noPressCount * 5); // Yes button grows
+            const noSize = 50 - (noPressCount * 5);  // No button shrinks
+
+            yesButton.style.flexBasis = `${yesSize}%`;
+            yesButton.style.width = `${yesSize}%`; // Ensure width also adjusts for flex-basis
+
+            if (noPressCount < maxNoPresses) {
+                noButton.style.flexBasis = `${noSize}%`;
+                noButton.style.width = `${noSize}%`; // Ensure width also adjusts for flex-basis
+            } else {
+                // Hide no button completely
+                noButton.style.display = 'none';
+                yesButton.style.flexBasis = '100%';
+                yesButton.style.width = '100%';
+                yesButton.textContent = finalYesMessage; // Update text for the final yes button
+            }
+        }
+
+        /**
+         * Handles the 'No' button click event.
+         */
+        function handleNoClick() {
+            if (noPressCount < maxNoPresses) {
+                const currentMessageIndex = noPressCount; // Use current 0-indexed count for messages
+
+                // 1. Add the message from her ('received') first, immediately.
+                addChatMessage(receivedNoMessages[currentMessageIndex], 'received');
+
+                // 2. Then, after a short delay, add the message from the proposer ('sent').
+                setTimeout(() => {
+                    addChatMessage(sentNoMessages[currentMessageIndex], 'sent');
+                    // 3. Increment count *after* both messages for this cycle are displayed/scheduled.
+                    noPressCount++;
+                    // 4. Update UI based on the *new* noPressCount for the *next* interaction's button sizes.
+                    updateUI();
+                }, 700); // Delay for the 'sent' message
+            }
+        }
+
+        /**
+         * Creates and animates confetti particles.
+         */
+        function createConfetti() {
+            const colors = ['#FFC0CB', '#FF69B4', '#FF1493', '#C71585', '#DB7093']; // Pink shades
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.classList.add('confetti');
+                confetti.style.setProperty('--color', colors[Math.floor(Math.random() * colors.length)]);
+                confetti.style.left = `${Math.random() * 100}vw`;
+                confetti.style.animationDelay = `${Math.random() * 0.5}s`;
+                celebrationOverlay.appendChild(confetti);
+            }
+        }
+
+        /**
+         * Handles the 'Yes' button click event.
+         */
+        function handleYesClick() {
+            // Hide buttons
+            buttonContainer.style.display = 'none';
+            // Show celebration overlay
+            celebrationOverlay.classList.remove('hidden');
+            // Trigger opacity transition
+            setTimeout(() => {
+                celebrationOverlay.style.opacity = '1';
+                createConfetti(); // Start confetti animation
+            }, 50); // Small delay to allow display change to register
+
+            // Optionally, remove confetti after some time
+            setTimeout(() => {
+                const confettiElements = document.querySelectorAll('.confetti');
+                confettiElements.forEach(c => c.remove());
+            }, 3000);
+        }
+
+        // Add event listeners
+        noButton.addEventListener('click', handleNoClick);
+        yesButton.addEventListener('click', handleYesClick);
+
+        // Initial setup on page load
+        window.onload = () => {
+            addChatMessage("Hey there! I have something important to ask you...", 'sent');
+            setTimeout(() => {
+                addChatMessage("Will you be my girlfriend? 🥰", 'sent');
+            }, 1000); // Delay for a more natural chat flow
+            // Initial button sizes are set by CSS, no need to call updateUI here.
+        };
+    </script>
+</body>
+</html>
