@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat App</title>
+    <title>Will You Be My Girlfriend?</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
@@ -20,13 +20,13 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             position: relative;
         }
-        /* REVERSED: My messages are now 'received' (left) */
+        /* My messages (proposer) are 'received' (left) */
         .chat-bubble.received {
             background-color: #dbeafe; /* Light blue for my messages */
             align-self: flex-start;
             margin-right: auto;
         }
-        /* REVERSED: Her messages are now 'sent' (right) */
+        /* Her messages (reply) are 'sent' (right) */
         .chat-bubble.sent {
             background-color: #fbcfe8; /* Light pink for her messages */
             align-self: flex-end;
@@ -87,6 +87,33 @@
             animation: confetti-fall 3s ease-out forwards;
             opacity: 0;
         }
+
+        /* Typing Indicator Styles (preserved from previous versions) */
+        .typing-dots {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            height: 1.5rem;
+        }
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            background-color: #888; /* Grey dots */
+            border-radius: 50%;
+            margin: 0 2px;
+            opacity: 0.4;
+            animation: typing-pulse 1.2s infinite ease-in-out;
+        }
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        @keyframes typing-pulse {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
@@ -94,6 +121,7 @@
         <!-- Chat Container -->
         <div id="chatContainer" class="w-full flex flex-col items-start mb-6 overflow-y-auto max-h-[60vh] pr-2">
             <!-- Initial message will be added here by JS -->
+            <!-- Typing indicator will be dynamically added/removed here -->
         </div>
 
         <!-- Buttons Container -->
@@ -123,8 +151,8 @@
         const maxNoPresses = 10;
 
         // Messages for each 'No' press (from the proposer - now 'received')
-        const myNoMessages = [ // Renamed from sentNoMessages for clarity
-            "Oh, really? Are you absolutely sure? 🤔",
+        const myNoMessages = [
+            "Oh, really? Are you absolutely sure? �",
             "Come on, don't be shy! Give it another thought. 😉",
             "My heart just skipped a beat... but not in a good way! 💔",
             "Is this a trick question? Because my answer is always 'yes' to you! 🥰",
@@ -137,7 +165,7 @@
         ];
 
         // Messages from her (now 'sent')
-        const herNoMessages = [ // Renamed from receivedNoMessages for clarity
+        const herNoMessages = [
             "Hmm, let me think...",
             "Are you sure you're ready for this? 😉",
             "But... what if I say no for real? 😜",
@@ -150,67 +178,48 @@
             "Fine, fine! You win! But only because you're cute! 😉"
         ];
 
-
         // Final 'Yes' messages after max 'No' presses
-        const finalYesMessage = "Yay, you are mine now! 🥰"; // Updated final message
+        const finalYesMessage = "Yay, you are mine now! 🥰";
 
         /**
          * Adds a new chat bubble to the container.
          * @param {string} text - The text content of the message.
          * @param {string} type - 'sent' or 'received' for styling.
+         * @param {string} id - Optional ID for the message div.
+         * @returns {HTMLElement} The created message div.
          */
-        function addChatMessage(text, type) {
+        function addChatMessage(text, type, id = null) {
             const messageDiv = document.createElement('div');
             messageDiv.classList.add('chat-bubble', type);
             messageDiv.textContent = text;
+            if (id) {
+                messageDiv.id = id;
+            }
             chatContainer.appendChild(messageDiv);
             // Scroll to the bottom to show the latest message
             chatContainer.scrollTop = chatContainer.scrollHeight;
+            return messageDiv;
         }
 
         /**
          * Updates the UI based on the current noPressCount.
-         * noPressCount is 0-indexed for array access, but 1-indexed for visual progression.
          */
         function updateUI() {
             // Adjust button sizes based on the *next* state (after the current 'no' press)
-            // Use noPressCount directly as it represents the number of 'no' presses completed.
             const yesSize = 50 + (noPressCount * 5); // Yes button grows
             const noSize = 50 - (noPressCount * 5);  // No button shrinks
 
             yesButton.style.flexBasis = `${yesSize}%`;
-            yesButton.style.width = `${yesSize}%`; // Ensure width also adjusts for flex-basis
+            yesButton.style.width = `${yesSize}%`;
 
             if (noPressCount < maxNoPresses) {
                 noButton.style.flexBasis = `${noSize}%`;
-                noButton.style.width = `${noSize}%`; // Ensure width also adjusts for flex-basis
+                noButton.style.width = `${noSize}%`;
             } else {
-                // Hide no button completely
                 noButton.style.display = 'none';
                 yesButton.style.flexBasis = '100%';
                 yesButton.style.width = '100%';
-                yesButton.textContent = finalYesMessage; // Update text for the final yes button
-            }
-        }
-
-        /**
-         * Handles the 'No' button click event.
-         */
-        function handleNoClick() {
-            if (noPressCount < maxNoPresses) {
-                const currentMessageIndex = noPressCount; // Use current 0-indexed count for messages
-
-                // 1. Add the message from her ('sent') first, immediately.
-                addChatMessage(herNoMessages[currentMessageIndex], 'sent');
-
-                // 2. Then, after a short delay, add the message from the proposer ('received').
-                setTimeout(() => {
-                    addChatMessage(myNoMessages[currentMessageIndex], 'received');
-                    // 3. Increment count *after* both messages for this cycle are displayed/scheduled.
-                    noPressCount++;
-                    // 4. Update UI based on the *new* noPressCount for the *next* interaction's button sizes.
-                    updateUI();
-                }, 700); // Delay for the 'my' response
+                yesButton.textContent = finalYesMessage;
             }
         }
 
@@ -218,7 +227,8 @@
          * Creates and animates confetti particles.
          */
         function createConfetti() {
-            const colors = ['#FFC0CB', '#FF69B4', '#FF1493', '#C71585', '#DB7093']; // Pink shades
+            // Reverted to pink shades for confetti
+            const colors = ['#FFC0CB', '#FF69B4', '#FF1493', '#C71585', '#DB7093'];
             for (let i = 0; i < 50; i++) {
                 const confetti = document.createElement('div');
                 confetti.classList.add('confetti');
@@ -230,20 +240,48 @@
         }
 
         /**
+         * Handles the 'No' button click event.
+         */
+        function handleNoClick() {
+            if (noPressCount < maxNoPresses) {
+                const currentMessageIndex = noPressCount;
+
+                // 1. Add the message from her ('sent' - light pink) first, immediately.
+                addChatMessage(herNoMessages[currentMessageIndex], 'sent');
+
+                // 2. Show typing indicator for *my* messages (received type - light blue)
+                const typingIndicator = addChatMessage('', 'received', 'typingIndicator');
+                typingIndicator.innerHTML = `
+                    <div class="typing-dots">
+                        <span></span><span></span><span></span>
+                    </div>
+                `;
+
+                // 3. Then, after a short delay, add the message from the proposer ('received' - light blue).
+                setTimeout(() => {
+                    // Remove typing indicator
+                    if (typingIndicator && typingIndicator.parentNode) {
+                        typingIndicator.parentNode.removeChild(typingIndicator);
+                    }
+
+                    addChatMessage(myNoMessages[currentMessageIndex], 'received');
+                    noPressCount++;
+                    updateUI();
+                }, 1500); // Increased delay for typing effect
+            }
+        }
+
+        /**
          * Handles the 'Yes' button click event.
          */
         function handleYesClick() {
-            // Hide buttons
             buttonContainer.style.display = 'none';
-            // Show celebration overlay
             celebrationOverlay.classList.remove('hidden');
-            // Trigger opacity transition
             setTimeout(() => {
                 celebrationOverlay.style.opacity = '1';
-                createConfetti(); // Start confetti animation
-            }, 50); // Small delay to allow display change to register
+                createConfetti();
+            }, 50);
 
-            // Optionally, remove confetti after some time
             setTimeout(() => {
                 const confettiElements = document.querySelectorAll('.confetti');
                 confettiElements.forEach(c => c.remove());
@@ -256,12 +294,10 @@
 
         // Initial setup on page load
         window.onload = () => {
-            // Initial messages are now 'received' (your messages)
             addChatMessage("Hey there! I have something important to ask you...", 'received');
             setTimeout(() => {
                 addChatMessage("Will you be my girlfriend? 🥰", 'received');
-            }, 1000); // Delay for a more natural chat flow
-            // Initial button sizes are set by CSS, no need to call updateUI here.
+            }, 1000);
         };
     </script>
 </body>
