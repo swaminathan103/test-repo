@@ -20,15 +20,17 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             position: relative;
         }
-        .chat-bubble.sent {
-            background-color: #dbeafe; /* Light blue for sent messages */
-            align-self: flex-end;
-            margin-left: auto;
-        }
+        /* REVERSED: My messages are now 'received' (left) */
         .chat-bubble.received {
-            background-color: #fbcfe8; /* Light pink for received messages (buttons) */
+            background-color: #dbeafe; /* Light blue for my messages */
             align-self: flex-start;
             margin-right: auto;
+        }
+        /* REVERSED: Her messages are now 'sent' (right) */
+        .chat-bubble.sent {
+            background-color: #fbcfe8; /* Light pink for her messages */
+            align-self: flex-end;
+            margin-left: auto;
         }
         .button-container {
             display: flex;
@@ -120,8 +122,8 @@
         let noPressCount = 0; // Starts at 0, increments after each full exchange
         const maxNoPresses = 10;
 
-        // Messages for each 'No' press (from the proposer - 'sent')
-        const sentNoMessages = [
+        // Messages for each 'No' press (from the proposer - now 'received')
+        const myNoMessages = [ // Renamed from sentNoMessages for clarity
             "Oh, really? Are you absolutely sure? 🤔",
             "Come on, don't be shy! Give it another thought. 😉",
             "My heart just skipped a beat... but not in a good way! 💔",
@@ -134,8 +136,8 @@
             "Okay, 'no' is no longer an option. It's destiny! ✨"
         ];
 
-        // Messages from her (received - 'received')
-        const receivedNoMessages = [
+        // Messages from her (now 'sent')
+        const herNoMessages = [ // Renamed from receivedNoMessages for clarity
             "Hmm, let me think...",
             "Are you sure you're ready for this? 😉",
             "But... what if I say no for real? 😜",
@@ -198,17 +200,17 @@
             if (noPressCount < maxNoPresses) {
                 const currentMessageIndex = noPressCount; // Use current 0-indexed count for messages
 
-                // 1. Add the message from her ('received') first, immediately.
-                addChatMessage(receivedNoMessages[currentMessageIndex], 'received');
+                // 1. Add the message from her ('sent') first, immediately.
+                addChatMessage(herNoMessages[currentMessageIndex], 'sent');
 
-                // 2. Then, after a short delay, add the message from the proposer ('sent').
+                // 2. Then, after a short delay, add the message from the proposer ('received').
                 setTimeout(() => {
-                    addChatMessage(sentNoMessages[currentMessageIndex], 'sent');
+                    addChatMessage(myNoMessages[currentMessageIndex], 'received');
                     // 3. Increment count *after* both messages for this cycle are displayed/scheduled.
                     noPressCount++;
                     // 4. Update UI based on the *new* noPressCount for the *next* interaction's button sizes.
                     updateUI();
-                }, 700); // Delay for the 'sent' message
+                }, 700); // Delay for the 'my' response
             }
         }
 
@@ -254,9 +256,10 @@
 
         // Initial setup on page load
         window.onload = () => {
-            addChatMessage("Hey there! I have something important to ask you...", 'sent');
+            // Initial messages are now 'received' (your messages)
+            addChatMessage("Hey there! I have something important to ask you...", 'received');
             setTimeout(() => {
-                addChatMessage("Will you be my girlfriend? 🥰", 'sent');
+                addChatMessage("Will you be my girlfriend? 🥰", 'received');
             }, 1000); // Delay for a more natural chat flow
             // Initial button sizes are set by CSS, no need to call updateUI here.
         };
