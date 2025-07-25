@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Will You Be My Girlfriend?</title>
+    <title>Chat App</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
@@ -152,7 +152,7 @@
 
         // Messages for each 'No' press (from the proposer - now 'received')
         const myNoMessages = [
-            "Oh, really? Are you absolutely sure? �",
+            "Oh, really? Are you absolutely sure? ❓", // Emoji updated here
             "Come on, don't be shy! Give it another thought. 😉",
             "My heart just skipped a beat... but not in a good way! 💔",
             "Is this a trick question? Because my answer is always 'yes' to you! 🥰",
@@ -160,7 +160,7 @@
             "My feelings are getting stronger with every 'no' you press! ❤️‍🔥",
             "You're making this hard, but I'm not giving up on us! 💪",
             "Just say 'yes' already! My finger is getting tired of waiting! 🥺",
-            "This is your last chance to say 'no' before 'yes' becomes inevitable! 😈",
+            "This is your last chance to say 'no' before 'yes' becomes inevitable! �",
             "Okay, 'no' is no longer an option. It's destiny! ✨"
         ];
 
@@ -295,9 +295,20 @@
         // Initial setup on page load
         window.onload = () => {
             addChatMessage("Hey there! I have something important to ask you...", 'received');
+            // Add typing indicator before the "Will you be my girlfriend?" message
+            const typingIndicator = addChatMessage('', 'received', 'initialTypingIndicator');
+            typingIndicator.innerHTML = `
+                <div class="typing-dots">
+                    <span></span><span></span><span></span>
+                </div>
+            `;
             setTimeout(() => {
+                // Remove typing indicator
+                if (typingIndicator && typingIndicator.parentNode) {
+                    typingIndicator.parentNode.removeChild(typingIndicator);
+                }
                 addChatMessage("Will you be my girlfriend? 🥰", 'received');
-            }, 1000);
+            }, 1000); // Delay for typing effect before the message
         };
     </script>
 </body>
